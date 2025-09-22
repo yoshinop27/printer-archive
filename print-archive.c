@@ -129,12 +129,13 @@ void print_contents(uint8_t *data, size_t size) {
     // Print the name and contents
     printf("%s\n", name);
     printf("%s\n", value);
+
+    //free memory
+    free(name);
+    free(size_str);
+    free(value);
   }
-  //free memory
-  free(name);
-  free(size_str);
-  free(value);
-  
+
   // exit cleanly
   exit(0);
 }
