@@ -5,9 +5,9 @@
 #include <string.h>
 #include <unistd.h>
 
-void print_contents(uint8_t* data, size_t size);
+void print_contents(uint8_t *data, size_t size);
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   // Make sure we have a file input
   if (argc != 2) {
     fprintf(stderr, "Please specify an input filename.\n");
@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   }
 
   // Try to open the file
-  FILE* input = fopen(argv[1], "r");
+  FILE *input = fopen(argv[1], "r");
   if (input == NULL) {
     perror("Unable to open input file");
     exit(1);
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   // Seek to the end of the file so we can get its size
   if (fseek(input, 0, SEEK_END) != 0) {
     perror("Unable to seek to end of file");
-    exit(2);
+    exit(1);
   }
 
   // Get the size of the file
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
   // Allocate a buffer to hold the file contents. We know the size in bytes, so
   // there's no need to multiply to get the size we pass to malloc in this case.
-  uint8_t* data = malloc(size);
+  uint8_t *data = malloc(size);
 
   // Read the file contents
   if (fread(data, 1, size, input) != size) {
@@ -62,12 +62,79 @@ int main(int argc, char** argv) {
   return 0;
 }
 
+// trim whitespace from header values
+void trim_whitespace(char *str) {
+  char *end = str + strlen(str) - 1;
+  while (end > str && ((*end == ' ') || (*end == '/'))) {
+    end--;
+  }
+  *(end + 1) = '\0';
+}
+
 /**
- * This function should print the name of each file in the archive followed by its contents.
+ * This function should print the name of each file in the archive followed by
+ * its contents.
  *
  * \param data This is a pointer to the first byte in the file.
  * \param size This is the number of bytes in the file.
  */
-void print_contents(uint8_t* data, size_t size) {
-  // TODO: Implement me!
+void print_contents(uint8_t *data, size_t size) {
+  // Declare CONSTANTS for sizes
+  const size_t SIG = 8;
+  // Start Cursor after signature
+  size_t cursor = SIG;
+  // checking that there is valid input
+  if (size <= SIG + 60) {
+    exit(0);
+  }
+  // Loop through the archive
+  while (cursor + 60 < size) {
+    // Place to hold name
+    char* name = malloc(16);
+    // Read the name
+    for (int j = 0; j < 16; j++) {
+      *(name+j) = data[cursor + j];
+    }
+    *(name+15) = '\0';
+    // Trim whitespace from name
+    trim_whitespace(name);
+
+    // Place to hold size
+    char* size_str = malloc(10);
+    // Read the size
+    for (int k = 0; k < 10; k++) {
+      *(size_str+k) = data[cursor + 48 + k];
+    }
+    *(size_str + 9) = '\0';
+    // trim and turn to int
+    trim_whitespace(size_str);
+    size_t size_value = atoi(size_str);
+
+    // Move the header to the value
+    cursor += 60;
+    // Create an string to hold chars
+    char *value = malloc(size_value);
+
+    // Read the values
+    for (size_t j = 0; j < size_value; j++) {
+      *(value + j) = data[cursor + j];
+    }
+    *(value+size_value-1) = '\0';
+
+    // Move cursor, check if odd
+    if (size_value % 2 != 0) {
+      size_value++;
+    }
+    cursor += size_value;
+    // Print the name and contents
+    printf("%s\n", name);
+    printf("%s\n", value);
+  }
+  //free memory
+  free(name);
+  free(size_str);
+  free(value);
+  
+  // exit cleanly
+  exit(0);
 }
