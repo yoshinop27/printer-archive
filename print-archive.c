@@ -83,43 +83,41 @@ void print_contents(uint8_t *data, size_t size) {
   const size_t SIG = 8;
   // Start Cursor after signature
   size_t cursor = SIG;
-  // checking that there is valid input
-  if (size <= SIG + 60) {
-    exit(0);
-  }
   // Loop through the archive
-  while (cursor + 60 < size) {
+  while (cursor + 60 <= size) {
     // Place to hold name
-    char* name = malloc(16);
+    char* name = malloc(17);
     // Read the name
     for (int j = 0; j < 16; j++) {
       *(name+j) = data[cursor + j];
     }
-    *(name+15) = '\0';
+    *(name+16) = '\0';
     // Trim whitespace from name
     trim_whitespace(name);
 
     // Place to hold size
-    char* size_str = malloc(10);
+    char* size_str = malloc(11);
     // Read the size
-    for (int k = 0; k < 10; k++) {
+    for (int k = 0; k < 11; k++) {
       *(size_str+k) = data[cursor + 48 + k];
     }
-    *(size_str + 9) = '\0';
+    *(size_str + 10) = '\0';
     // trim and turn to int
     trim_whitespace(size_str);
     size_t size_value = atoi(size_str);
 
     // Move the header to the value
     cursor += 60;
+    // Check to make sure data doesnt go over size
+    if (size < cursor + size_value) return;
     // Create an string to hold chars
-    char *value = malloc(size_value);
+    char *value = malloc(size_value+1);
 
     // Read the values
     for (size_t j = 0; j < size_value; j++) {
       *(value + j) = data[cursor + j];
     }
-    *(value+size_value-1) = '\0';
+    *(value+size_value) = '\0';
 
     // Move cursor, check if odd
     if (size_value % 2 != 0) {
@@ -135,7 +133,4 @@ void print_contents(uint8_t *data, size_t size) {
     free(size_str);
     free(value);
   }
-
-  // exit cleanly
-  exit(0);
 }
